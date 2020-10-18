@@ -231,6 +231,7 @@ namespace OpenVR2Key
         {
             var configName = forceDefault ? MainModel.CONFIG_DEFAULT : _currentApplicationId;
             var config = MainModel.RetrieveConfig(configName);
+            var mouseConfig = MainModel.RetrieveMouseConfig();
             if (config != null) MainModel.SetConfigName(configName);
             Debug.WriteLine($"Config for {configName} found: {config != null}");
             ConfigRetrievedAction.Invoke(config, _currentApplicationId == MainModel.CONFIG_DEFAULT);
@@ -298,6 +299,12 @@ namespace OpenVR2Key
                 }
                 SimulateKeyPress(data, binding);
             }
+
+            if (MainModel.MouseBindingExists(actionKey))
+            {
+                var binding = MainModel.GetMouseBinding(actionKey);
+                SimulateMousePress(data, binding);
+            }
         }
         #endregion
 
@@ -315,6 +322,52 @@ namespace OpenVR2Key
             {
                 foreach (var vk in binding.Item3) _sim.Keyboard.KeyUp(vk);
                 foreach (var vk in binding.Item2) _sim.Keyboard.KeyUp(vk);
+            }
+        }
+
+        private void SimulateMousePress(InputDigitalActionData_t data, string binding)
+        {
+            if (data.bState)
+            {
+                switch (binding)
+                {
+                    case "Left":
+                        _sim.Mouse.LeftButtonDown();
+                        break;
+                    case "Right":
+                        _sim.Mouse.RightButtonDown();
+                        break;
+                    case "Middle":
+                        _sim.Mouse.MiddleButtonDown();
+                        break;
+                    case "XButton0":
+                        _sim.Mouse.XButtonDown(0);
+                        break;
+                    case "XButton1":
+                        _sim.Mouse.XButtonDown(1);
+                        break;
+                }
+            }
+            else
+            {
+                switch (binding)
+                {
+                    case "Left":
+                        _sim.Mouse.LeftButtonUp();
+                        break;
+                    case "Right":
+                        _sim.Mouse.RightButtonUp();
+                        break;
+                    case "Middle":
+                        _sim.Mouse.MiddleButtonUp();
+                        break;
+                    case "XButton0":
+                        _sim.Mouse.XButtonUp(0);
+                        break;
+                    case "XButton1":
+                        _sim.Mouse.XButtonUp(1);
+                        break;
+                }
             }
         }
         #endregion

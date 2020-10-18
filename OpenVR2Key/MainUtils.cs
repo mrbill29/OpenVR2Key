@@ -3,11 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Input;
+using GregsStack.InputSimulatorStandard;
 
 namespace OpenVR2Key
 {
     public static class MainUtils
     {
+        private static Dictionary<System.Windows.Input.MouseButton, MouseButton> transaltionTableMouseButtons = new Dictionary<System.Windows.Input.MouseButton, MouseButton>()
+        {
+            {System.Windows.Input.MouseButton.Left, MouseButton.LeftButton},
+            {System.Windows.Input.MouseButton.Middle, MouseButton.MiddleButton},
+            {System.Windows.Input.MouseButton.Right, MouseButton.RightButton},
+            {System.Windows.Input.MouseButton.XButton1, MouseButton.LeftButton},
+            {System.Windows.Input.MouseButton.XButton2 , MouseButton.RightButton}
+        };
         private static Dictionary<Key, VirtualKeyCode> translationTableModifiers = new Dictionary<Key, VirtualKeyCode>() {
             { Key.LeftAlt, VirtualKeyCode.LMENU },
             { Key.RightAlt, VirtualKeyCode.RMENU },

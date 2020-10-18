@@ -12,9 +12,11 @@ namespace OpenVR2Key
     {
         #region bindings
         public static readonly string CONFIG_DEFAULT = "default";
+        public static readonly string MOUSE_CONFIG_DEFAULT = "default_mouse";
         private static readonly object _bindingsLock = new object();
+        private static readonly object _mouseBindingsLock = new object();
         private static Dictionary<string, Tuple<Key[], VirtualKeyCode[], VirtualKeyCode[]>> _bindings = new Dictionary<string, Tuple<Key[], VirtualKeyCode[], VirtualKeyCode[]>>();
-        
+        private static Dictionary<string, string> _mouseBindings = new Dictionary<string, string>();
         /**
          * Store key codes as virtual key codes.
          */
@@ -48,6 +50,32 @@ namespace OpenVR2Key
                 _bindings = bindings;
             }
         }
+
+        static private void RegisterMouseBindings(Dictionary<string, string> config)
+        {
+            var bindings = new Dictionary<string, string>();
+            lock (_mouseBindingsLock)
+            {
+                _mouseBindings = bindings;
+            }
+        }
+        
+        public static bool MouseBindingExists(string actionKey)
+        {
+            lock (_mouseBindingsLock)
+            {
+                return _mouseBindings.ContainsKey(actionKey);
+            }
+        }
+
+        public static string GetMouseBinding(string actionKey)
+        {
+            lock (_mouseBindingsLock)
+            {
+                return _mouseBindings[actionKey];
+            }
+        }
+        
         static public bool BindingExists(string actionKey)
         {
             lock (_bindingsLock)
@@ -111,7 +139,7 @@ namespace OpenVR2Key
             return $"{Directory.GetCurrentDirectory()}\\config\\";
         }
 
-        static public void StoreConfig(Dictionary<string, Key[]> config = null, string configName = null)
+        static public void StoreConfig(Dictionary<string, Key[]> config = null, string configName = null, Dictionary<string, string> mouseConfig = null)
         {
             if (config == null)
             {
@@ -124,12 +152,23 @@ namespace OpenVR2Key
                     }
                 }
             }
+
+            if (mouseConfig == null)
+            {
+                lock (_mouseBindingsLock)
+                {
+                    mouseConfig = new Dictionary<string, string>(_mouseBindings);
+                }
+            }
             if (configName == null) configName = _configName;
             var jsonString = JsonConvert.SerializeObject(config);
+            var jsonMouseString = JsonConvert.SerializeObject(mouseConfig);
             var configDir = GetConfigFolderPath();
             var configFilePath = $"{configDir}{configName}.json";
+            var configMouseFilePath = $"{configDir}{MOUSE_CONFIG_DEFAULT}.json";
             if (!Directory.Exists(configDir)) Directory.CreateDirectory(configDir);
             File.WriteAllText(configFilePath, jsonString);
+            File.WriteAllText(configMouseFilePath, jsonMouseString);
         }
 
         static public void DeleteConfig(string configName = null)
@@ -144,6 +183,20 @@ namespace OpenVR2Key
             }
         }
 
+        public static Dictionary<string, string> RetrieveMouseConfig()
+        {
+            var configDir = $"{Directory.GetCurrentDirectory()}\\config\\";
+            var configFilePath = $"{configDir}{MOUSE_CONFIG_DEFAULT}.json";
+            var jsonString = File.Exists(configFilePath) ? File.ReadAllText(configFilePath) : null;
+            if (jsonString != null)
+            {
+                var config = JsonConvert.DeserializeObject(jsonString, typeof(Dictionary<string, string>)) as Dictionary<string, string>;
+                RegisterMouseBindings(config);
+                return config;
+            }
+            return null;
+        }
+        
         static public Dictionary<string, Key[]> RetrieveConfig(string configName = null)
         {
             if (configName == null) configName = _configName;
